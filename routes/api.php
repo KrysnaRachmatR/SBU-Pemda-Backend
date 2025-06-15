@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AddAnggotaController;
 use App\Http\Controllers\Api\ShowAnggotaController;
 use App\Http\Controllers\Api\KbliController;
 use App\Http\Controllers\Api\AnggotaExportController;
+use App\Http\Controllers\Api\KotaKabupatenController;
 
 /*
 |--------------------------------------------------------------------------
@@ -60,9 +61,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/diagram-klasifikasi-anggota', [ShowAnggotaController::class, 'anggotaPerKlasifikasi']);
     Route::get('/diagram-status-anggota', [ShowAnggotaController::class, 'statistikStatusAnggota']);
     Route::get('/diagram-status-anggotaa', [ShowAnggotaController::class, 'statistikStatussAnggota']);
+
+    // Export Anggota
+    Route::get('/export/anggota/excel', [AnggotaExportController::class, 'exportExcel']);
+    Route::get('/export/anggota/csv', [AnggotaExportController::class, 'exportCsv']);
+    
+    // CRUD Kota Kabupaten
+    Route::get('/kota-kabupaten/{id}', [KotaKabupatenController::class, 'show']);
+    Route::get('/kota-kabupaten', [KotaKabupatenController::class, 'index']);
+
+    
+    Route::get('/diagram-subklasifikasi-anggota', [ShowAnggotaController::class, 'anggotaPerSubKlasifikasi']);
+    
+    Route::get('/sub-klasifikasi/tahun/{klasifikasiId}', [SubKlasifikasiController::class, 'getTahunByKlasifikasi']);
+    Route::get('/sub-klasifikasi/{tahun}/{klasifikasiId}', [SubKlasifikasiController::class, 'filter']);
 });
-
-Route::get('/export/anggota/excel', [AnggotaExportController::class, 'exportExcel']);
-Route::get('/export/anggota/csv', [AnggotaExportController::class, 'exportCsv']);
-
 

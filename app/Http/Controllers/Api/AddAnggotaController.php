@@ -13,7 +13,7 @@ class AddAnggotaController extends Controller
     {
         $validated = $request->validate([
             'sub_klasifikasi_ids' => 'required|array',
-            'sub_klasifikasi_ids.*' => 'exists:sub_klasifikasis,id',
+            'sub_klasifikasi_ids.*' => 'integer|exists:sub_klasifikasis,id',
             'tanggal_pendaftaran' => 'required|date',
             'kota_kabupaten_id' => 'required|exists:kota_kabupatens,id',
             'nama_perusahaan' => 'required|string|max:255',
@@ -25,10 +25,12 @@ class AddAnggotaController extends Controller
             'no_telp' => 'nullable|string|max:20',
         ]);
 
+        // Ambil tanggal
         $tanggalPendaftaran = \Carbon\Carbon::parse($validated['tanggal_pendaftaran']);
         $masaBerlakuSampai = $tanggalPendaftaran->copy()->addYears(3)->subDay();
         $today = \Carbon\Carbon::today();
 
+        // Cari atau buat anggota
         $anggota = Anggota::firstOrCreate(
             ['nama_perusahaan' => $validated['nama_perusahaan']],
             [
@@ -42,8 +44,18 @@ class AddAnggotaController extends Controller
             ]
         );
 
+        // 🔁 Ubah nama sub klasifikasi → ID
+        $subIds = $validated['sub_klasifikasi_ids'];
+        if (empty($subIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada sub klasifikasi yang valid ditemukan.',
+            ], 422);
+        }
+
+        // Ambil sub klasifikasi yang sudah dimiliki anggota
         $existingSubIds = $anggota->subKlasifikasis()->pluck('sub_klasifikasis.id')->toArray();
-        $newSubIds = array_diff($validated['sub_klasifikasi_ids'], $existingSubIds);
+        $newSubIds = array_diff($subIds, $existingSubIds);
 
         if (empty($newSubIds)) {
             return response()->json([
@@ -52,24 +64,25 @@ class AddAnggotaController extends Controller
             ], 409);
         }
 
-        // Di sini bagian yang perlu kamu update:
+        // Siapkan data pivot
         $pivotData = [];
         foreach ($newSubIds as $subId) {
+            $status = 'aktif';
+
             if ($today->greaterThanOrEqualTo($masaBerlakuSampai)) {
                 $status = 'nonaktif';
             } elseif ($today->diffInMonths($masaBerlakuSampai, false) <= 3) {
                 $status = 'pending';
-            } else {
-                $status = 'aktif';
             }
 
             $pivotData[$subId] = [
                 'tanggal_pendaftaran' => $tanggalPendaftaran,
                 'masa_berlaku_sampai' => $masaBerlakuSampai,
-                'status' => $status,  // Ini tambahan supaya status tersimpan di pivot
+                'status' => $status,
             ];
         }
 
+        // Simpan relasi ke pivot table
         $anggota->subKlasifikasis()->attach($pivotData);
 
         return response()->json([

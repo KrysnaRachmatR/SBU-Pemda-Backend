@@ -117,7 +117,7 @@ class ShowAnggotaController extends Controller
         ], 200);
     }
 
- public function search(Request $request)
+    public function search(Request $request)
     {
         $query = Anggota::with([
             'subKlasifikasis.klasifikasi',
@@ -232,4 +232,24 @@ class ShowAnggotaController extends Controller
         ]);
     }
 
+    public function anggotaPerSubKlasifikasi()
+    {
+        $data = \App\Models\SubKlasifikasi::with('anggotas', 'klasifikasi')->get();
+
+        $result = $data->map(function ($sub) {
+            return [
+                'id' => $sub->id,
+                'nama_sub_klasifikasi' => $sub->nama,
+                'kode_sub_klasifikasi' => $sub->kode_sub_klasifikasi,
+                'nama_klasifikasi' => $sub->klasifikasi->nama ?? null,
+                'jumlah_anggota' => $sub->anggotas->count(),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data jumlah anggota per sub klasifikasi',
+            'data' => $result,
+        ]);
+    }
 }

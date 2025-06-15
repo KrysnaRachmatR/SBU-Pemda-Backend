@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SubKlasifikasi;
+use App\Models\Klasifikasi;
 use App\Models\Kbli;
 use Illuminate\Http\Request;
 
@@ -13,6 +14,31 @@ class SubKlasifikasiController extends Controller
     {
         return SubKlasifikasi::with('klasifikasi', 'kblis')->get();
     }
+
+   public function getTahunByKlasifikasi($klasifikasiId)
+    {
+        $tahunList = SubKlasifikasi::where('klasifikasi_id', $klasifikasiId)
+            ->pluck('tahun')
+            ->unique()
+            ->sort()
+            ->values();
+
+        return response()->json($tahunList);
+    }
+
+
+    public function filter($tahun, $klasifikasiId)
+    {
+        $subKlasifikasi = SubKlasifikasi::with('kblis')
+            ->where('klasifikasi_id', $klasifikasiId)
+            ->where('tahun', $tahun)
+            ->get(['id', 'nama', 'kode_sub_klasifikasi', 'tahun']);
+
+        return response()->json($subKlasifikasi);
+    }
+
+
+
 
    public function store(Request $request)
     {
