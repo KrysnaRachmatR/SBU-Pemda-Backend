@@ -52,15 +52,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/add-anggota', [AddAnggotaController::class, 'store']);
     Route::put('/add-anggota/{id}', [AddAnggotaController::class, 'update']);
     Route::put('/anggota/{id}/sub-klasifikasi/{subId}', [AddAnggotaController::class, 'updateSubKlasifikasi']);
+    Route::put('/anggota/{anggotaId}/update-sub-tanggal', [AddAnggotaController::class, 'updateSubKlasifikasiTanggal']);
     Route::delete('/add-anggota/{id}', [AddAnggotaController::class, 'destroy']);
 
     // Show Anggota
     Route::get('/anggota', [ShowAnggotaController::class, 'index']);
+    Route::get('/anggota/{anggotaId}/sub-klasifikasi', [ShowAnggotaController::class, 'getSubKlasifikasiByAnggota']);
     Route::get('/anggota/{id}', [ShowAnggotaController::class, 'show']);
     Route::get('/anggota/search', [ShowAnggotaController::class, 'search']);
     Route::get('/diagram-klasifikasi-anggota', [ShowAnggotaController::class, 'anggotaPerKlasifikasi']);
     Route::get('/diagram-status-anggota', [ShowAnggotaController::class, 'statistikStatusAnggota']);
     Route::get('/diagram-status-anggotaa', [ShowAnggotaController::class, 'statistikStatussAnggota']);
+   
 
     // Export Anggota
     Route::get('/export/anggota/excel', [AnggotaExportController::class, 'exportExcel']);
@@ -70,10 +73,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/kota-kabupaten/{id}', [KotaKabupatenController::class, 'show']);
     Route::get('/kota-kabupaten', [KotaKabupatenController::class, 'index']);
 
-    
-    Route::get('/diagram-subklasifikasi-anggota', [ShowAnggotaController::class, 'anggotaPerSubKlasifikasi']);
-    
+    Route::get('/diagram-subklasifikasi-anggota', [ShowAnggotaController::class, 'anggotaPerSubKlasifikasi']);    
     Route::get('/sub-klasifikasi/tahun/{klasifikasiId}', [SubKlasifikasiController::class, 'getTahunByKlasifikasi']);
     Route::get('/sub-klasifikasi/{tahun}/{klasifikasiId}', [SubKlasifikasiController::class, 'filter']);
+    Route::get('/anggota/diagram', [ShowAnggotaController::class, 'getStatusCounts']); 
 });
 
+    

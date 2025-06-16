@@ -97,6 +97,7 @@ class ShowAnggotaController extends Controller
                         'nama_klasifikasi' => $sub->klasifikasi->nama ?? null,
                         'nama_sub_klasifikasi' => $sub->nama ?? null,
                         'kode_sub_klasifikasi' => $sub->kode_sub_klasifikasi ?? null,
+                        'tahun' => $sub->tahun ?? null,
                         'kblis' => $sub->kblis->map(function ($kbli) {
                             return [
                                 'kode_kbli' => $kbli->kode,
@@ -252,4 +253,44 @@ class ShowAnggotaController extends Controller
             'data' => $result,
         ]);
     }
+
+    public function getSubKlasifikasiByAnggota($id)
+    {
+        $anggota = Anggota::with([
+            'subKlasifikasis.klasifikasi',
+            'subKlasifikasis.kblis'
+        ])->find($id);
+
+        if (!$anggota) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anggota tidak ditemukan.'
+            ], 404);
+        }
+
+        $subKlasifikasis = $anggota->subKlasifikasis->map(function ($sub) {
+            return [
+                'id' => $sub->id,
+                'kode_sub_klasifikasi' => $sub->kode_sub_klasifikasi,
+                'nama_sub_klasifikasi' => $sub->nama,
+                'nama_klasifikasi' => $sub->klasifikasi->nama ?? null,
+                'kblis' => $sub->kblis->map(function ($kbli) {
+                    return [
+                        'kode_kbli' => $kbli->kode,
+                        'nama_kbli' => $kbli->nama ?? null,
+                    ];
+                }),
+                'tanggal_pendaftaran' => $sub->pivot->tanggal_pendaftaran,
+                'masa_berlaku_sampai' => $sub->pivot->masa_berlaku_sampai,
+                'status' => $sub->pivot->status,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sub klasifikasi berhasil diambil.',
+            'data' => $subKlasifikasis
+        ]);
+    }
+
 }

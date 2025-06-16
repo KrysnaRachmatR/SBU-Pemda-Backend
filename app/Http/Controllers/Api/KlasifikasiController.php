@@ -12,7 +12,10 @@ class KlasifikasiController extends Controller
 {
     public function index()
     {
-        return Klasifikasi::all();
+        return response()->json([
+            'success' => true,
+            'data' => Klasifikasi::all()
+        ]);
     }
 
     public function store(Request $request)

@@ -167,49 +167,54 @@ class AddAnggotaController extends Controller
         ]);
     }
 
-    public function updateSubKlasifikasi(Request $request, $anggotaId, $subKlasifikasiId)
-    {
-        $anggota = Anggota::find($anggotaId);
-        if (!$anggota) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anggota tidak ditemukan.',
-            ], 404);
-        }
+    public function updateSubKlasifikasiTanggal(Request $request, $anggotaId)
+{
+    $validated = $request->validate([
+        'sub_klasifikasi_id' => 'required|integer|exists:sub_klasifikasis,id',
+        'tanggal_pendaftaran' => 'required|date',
+    ]);
 
-        if (!$anggota->subKlasifikasis()->where('sub_klasifikasis.id', $subKlasifikasiId)->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Sub klasifikasi tidak dimiliki oleh anggota ini.',
-            ], 404);
-        }
-
-        $validated = $request->validate([
-            'tanggal_pendaftaran' => 'required|date',
-        ]);
-
-        $tanggalPendaftaran = \Carbon\Carbon::parse($validated['tanggal_pendaftaran']);
-        $masaBerlakuSampai = $tanggalPendaftaran->copy()->addYears(3)->subDay();
-        $today = \Carbon\Carbon::today();
-
-        if ($today->greaterThanOrEqualTo($masaBerlakuSampai)) {
-            $status = 'nonaktif';
-        } elseif ($today->diffInMonths($masaBerlakuSampai, false) <= 3) {
-            $status = 'pending';
-        } else {
-            $status = 'aktif';
-        }
-
-        $anggota->subKlasifikasis()->updateExistingPivot($subKlasifikasiId, [
-            'tanggal_pendaftaran' => $tanggalPendaftaran,
-            'masa_berlaku_sampai' => $masaBerlakuSampai,
-            'status' => $status,
-        ]);
-
+    $anggota = Anggota::find($anggotaId);
+    if (!$anggota) {
         return response()->json([
-            'success' => true,
-            'message' => 'Sub klasifikasi anggota berhasil diperbarui.',
-            'data' => $anggota->load('subKlasifikasis'),
-        ]);
+            'success' => false,
+            'message' => 'Anggota tidak ditemukan.',
+        ], 404);
     }
+
+    $subId = $validated['sub_klasifikasi_id'];
+
+    // Cek apakah sub klasifikasi terhubung dengan anggota
+    if (!$anggota->subKlasifikasis()->where('sub_klasifikasis.id', $subId)->exists()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Sub klasifikasi ini belum terhubung dengan anggota.',
+        ], 422);
+    }
+
+    // Hitung ulang masa berlaku & status
+    $tanggalPendaftaran = \Carbon\Carbon::parse($validated['tanggal_pendaftaran']);
+    $masaBerlakuSampai = $tanggalPendaftaran->copy()->addYears(3)->subDay();
+    $today = \Carbon\Carbon::today();
+
+    $status = 'aktif';
+    if ($today->greaterThanOrEqualTo($masaBerlakuSampai)) {
+        $status = 'nonaktif';
+    } elseif ($today->diffInMonths($masaBerlakuSampai, false) <= 3) {
+        $status = 'pending';
+    }
+
+    // Update data pivot
+    $anggota->subKlasifikasis()->updateExistingPivot($subId, [
+        'tanggal_pendaftaran' => $tanggalPendaftaran,
+        'masa_berlaku_sampai' => $masaBerlakuSampai,
+        'status' => $status,
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Tanggal pendaftaran sub klasifikasi berhasil diperbarui.',
+        'data' => $anggota->load('subKlasifikasis'),
+    ]);
+}
 }
